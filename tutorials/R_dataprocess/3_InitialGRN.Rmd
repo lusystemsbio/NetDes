@@ -1,10 +1,35 @@
+---
+title: "3.Rcistarget_initial GRN"
+author: "YUKAI YOU"
+date: '2024-10-10'
+output:
+  html_document: default
+  pdf_document: default
+---
 
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
 
-tfs <- readRDS("~/Desktop/8.17/Singlecell6.25/7.27/fisher exact test/guohaotfs.rds")
+#### Step 1: Perform Motif Enrichment Analysis Using RcisTarget
 
+Input Gene Clusters and Load Data
 
+```{r,echo=FALSE, results="hide", message=FALSE, warning=FALSE}
+source("Function.R")
+library(dplyr)
+library(NetAct)
+library(RcisTarget)
+tfs <- readRDS("tfs.rds")
+cluster.results= readRDS("cluster_shortname.rds")
 data(motifAnnotations_hgnc)
-motifRankings <- importRankings("~/Desktop/8.17/Rcistarget test/hg19-tss-centered-10kb-7species.mc9nr.feather")
+
+```
+
+Wel use **RcisTarget** to perform motif enrichment analysis for each gene cluster. This analysis will help you identify transcription factor motifs that are significantly enriched in each cluster.
+
+```{r,eval=FALSE}
+motifRankings <- importRankings("hg19-tss-centered-10kb-7species.mc9nr.feather")
 
 motiftable <- list()
 motifwgene <- list()
@@ -34,80 +59,52 @@ for(i in 1:length(cluster.results)) {
   })
 }
 
-
 motifwgenetotal=do.call(rbind,motifwgene)
-
 motiftabletotal=do.call(rbind,motiftable)
+saveRDS(motifwgenetotal, file = "motifwgenetotal.rds")
+saveRDS(motiftabletotal, file = "motiftabletotal.rds")
 
+```
 
+#### Step 2: Build the Initial GRN Using the Motif Enrichment Results and TF Lists
 
-library(dplyr)
-library(NetAct)
-tfs=tfs
+You need a list of known transcription factors (TFs) that you want to include in your GRN (obtained from 2.TFs finding).
+
+The Normalized Enrichment Score (NES) is used to filter significant motifs. You can choose a threshold (e.g., NES \> 1) to select only the most enriched motifs for your GRN.
+
+```{r}
+motifwgenetotal <- readRDS("motifwgenetotal.rds")
+motiftabletotal <- readRDS("motiftabletotal.rds")
+tfs=tfs # input your tf lists
 lim=1
-ae.wgene=motifwgenetotal[motifwgenetotol$NES>lim,]
+ae.wgene <- motifwgenetotal[NES > lim, ]
 ae=motiftabletotal[motiftabletotal$NES>lim,]
 TFhighConf=split(ae.wgene$TF_highConf,
                  ae$geneSet)
 listgene=TFhighConf$geneSet
-
 TFhighConf2=split(ae.wgene$enrichedGenes,
                   ae$geneSet)
 listgene2=TFhighConf2$geneSet
-
 genestest=genenames(listgene = listgene)
 genestest2=targetnames(listgene2 = listgene2)
-
 numbertest=getnrow(genestest,tfs=tfs)
 genestest=updatalist(gene = genestest,number = numbertest,tfs = tfs)
 genestest2=updatalist(gene = genestest2,number = numbertest,tfs = tfs)
-
 tflinks.results=tflinks(numbertest,genes = genestest,genes2=genestest2)
-
-d[,1]=genes[[i]]
-
-tflinks<-function(number,genes,genes2){
-  dtotal=matrix((NA),ncol=3)
-  for(i in number){
-    if(length(genes[[i]])==1 && !is.null(genes2[[i]])){
-      d=matrix(NA,ncol = 3,nrow = length(genes2[[i]]))
-      d[,1]=genes[[i]]
-      d[,2]=genes2[[i]]
-      dtotal=rbind(dtotal,d)
-    }else if (length(genes[[i]])>1 && !is.null(genes2[[i]])){ for (t in 1:length(genes[[i]])){
-      d=matrix(NA,ncol = 3,nrow = length(genes2[[i]]))
-      d[,1]=genes[[i]][t]
-      d[,2]=genes2[[i]]
-      dtotal=rbind(dtotal,d)
-    }
-    } 
-  }
-  dtotal=dtotal[-1,]
-  colnames(dtotal)=c('Source','Target','Interaction')
-  dtotal
-}
-
-dtotal
-
-
 tflinks.results=as.data.frame(tflinks.results)
 dtotal.unique=distinct(tflinks.results, .keep_all = TRUE)
 dtotal.unique[,3]=1
 plot_network(dtotal.unique)
-####
+```
 
+Step 3: Expand the GRN Using TRRUST and NetAct Databases
 
-dtotal.unique
+In this step, you will integrate additional interactions from external databases like TRRUST and NetAct to further refine your initial GRN.
 
-
-write.csv(dtotal.unique, "network1.8.csv")
-
-## add trrust database
-
+```{r}
 
 trrust_ <- read.table('trrust_rawdata.human.tsv', sep='\t', header=F)
 colnames(trrust_)=c('Source','Target','Interaction','n')
-
 trrust_tf=trrust_[trrust_[,1]%in%tfs,]
 trrust_tf_2=trrust_tf[trrust_tf[,2]%in%tfs,]  
 trrust_tf_3=trrust_tf_2[!(trrust_tf_2[,1]==trrust_tf_2[,2]),]
@@ -115,49 +112,41 @@ interactions=unique(trrust_tf_3[,1:2])
 inter=cbind(interactions,1)
 colnames(inter)=colnames(dtotal.unique)
 
+dtotal.unique=rbind(dtotal.unique,inter)
+dtotal.unique=unique(dtotal.unique)
 
-### NetAct
-load("~/Desktop/8.17/Singlecell6.25/7.27/fisher exact test/hDB2.RData")
-TF_hDB2=hDB[tfs]
+dtotal.unique <- dtotal.unique[dtotal.unique$Source != dtotal.unique$Target, ]
+dtotal_final=dtotal.unique[c(-47,-52),]
+plot_network(dtotal_final)
+write.csv(dtotal_final, "InitialGRN.csv")
+
+```
+
+You will get 'InitialGRN.csv' which containing the no-sign initial GRN.
+
+Also, you can combine the NetAct database into the initial GRN.
+
+```{r}
+data(hDB)
 TF_hDB=hDB[tfs]
-
 for (i in 1:length(TF_hDB)){
-  TF_hDB2[[i]]=TF_hDB[[i]][TF_hDB[[i]]%in%tfs]
+  TF_hDB[[i]]=TF_hDB[[i]][TF_hDB[[i]]%in%tfs]
 }
 
 inter_NATACT=matrix(NA,nrow=1,ncol=3)
 inter_NATACT[1,]=c('Source','Target','Interaction')
-for (i in 1:length(TF_hDB2)){
-  if (length(TF_hDB2[[i]])>0){
-    interaction=matrix(NA,nrow=length(TF_hDB2[[i]]),ncol=3)
-    interaction[,1]=names(TF_hDB2[i])
-    interaction[,2]=TF_hDB2[[i]]
+for (i in 1:length(TF_hDB)){
+  if (length(TF_hDB[[i]])>0){
+    interaction=matrix(NA,nrow=length(TF_hDB[[i]]),ncol=3)
+    interaction[,1]=names(TF_hDB[i])
+    interaction[,2]=TF_hDB[[i]]
     interaction[,3]=1
     inter_NATACT=rbind(inter_NATACT,interaction)
   }
 }
-
-
 colnames(inter_NATACT)=inter_NATACT[1,]
 inter_NATACT=inter_NATACT[-1,]
 inter_NATACT=as.data.frame(inter_NATACT)
-
-dtotal.unique2=unique(rbind(dtotal.unique,inter_NATACT))
-
-### NetAct
-
-df=dtotal.unique2
-
-plot_network(dtotal.unique2)
-
-only_source <- setdiff(unique(df$Source), unique(df$Target))
-
-# Exclude SOX17 and ETV2 from this list
-only_source <- setdiff(only_source, c("SOX17", "ETV2"))
-
-# Remove rows where the Source is in the only_source list
-df_filtered <- df[!df$Source %in% only_source, ]
-
-plot_network(df_filtered)
-
-plot_network2(df_filtered)
+dtotal_final2=unique(rbind(dtotal_final,inter_NATACT))
+write.csv(dtotal_final2, "InitialGRN2.csv")
+```

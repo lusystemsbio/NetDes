@@ -1,26 +1,58 @@
+---
+title: "2.TFs finding"
+author: "YUKAI YOU"
+date: '2024-10-09'
+output: html_document
+editor_options: 
+  markdown: 
+    wrap: sentence
+---
 
-back_rr=readRDS("background.rds")
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
 
+#### Step 1: Load the NetAct Database and Cluster Results 
+
+Begin by loading the NetAct database and the cluster results.
+For the database, retain only the transcription factors (TFs) that have more than 5 target genes.
+In the cluster results, remove Cluster 7, as this cluster consists primarily of noise genes.
+
+```{r}
+
+library(NetAct)
+library(stringr)
+library(ggplot2)
+back_gens=readRDS("genenames.rds")
+test=back_gens
+test.split2<-cbind(test,1)
+name<-str_split_fixed(test.split2[,1],"_",2)
+back_gens<-name[,2]
+
+cluster.results.rr=readRDS("2geneclusters_dis_02_025.rds")
 data(hDB)
 lens = sapply(hDB, length)
 ids = which(lens >= 5)
 hDB = hDB[ids]
-hDB=c(hDB, addhDB)
+#hDB=c(hDB, addhDB) you can add your databased as this.
 
-cluster.results.rr=readRDS("ref_dis_06_025.rds") # use repro_dis_06_025 and ref_dis_06_025
-
+cluster.results.rr[[7]] <- NULL
 b2=c(NULL)
 for( i in 1:length(cluster.results.rr)){
   test=cluster.results.rr[[i]]
-  #test.split2<-cbind(test,1)
-  #name<-str_split_fixed(test.split2[,1],"-",2)
-  #test.name<-name[,2]
-  b2=c(b2,test)
+  test.split2<-cbind(test,1)
+  name<-str_split_fixed(test.split2[,1],"-",2)
+  test.name<-name[,2]
+  cluster.results.rr[[i]] = test.name
+  b2=c(b2,test.name)
 }
+```
 
+#### Step 2: Apply Fisher's Exact Test 
 
+Perform a Fisher's exact test to identify genes with a q-value smaller than 0.1. We only consider the TFs within the 6 clusters.
 
-
+```{r}
 TF=c(intersect(b2,names(hDB)))
 TF.hDB = hDB[TF]
 final.results = c(NULL)
@@ -32,7 +64,7 @@ for (k in 1:length(TF)) {
   names(listA) = paste0("g", 1:length(listA))
   
   nameB = test.name
-  background = back_rr
+  background = back_gens
   number = vector(mode = "list", length = length(listA))
   
   for (i in 1:length(listA)) {
@@ -40,7 +72,6 @@ for (k in 1:length(TF)) {
     b = length(background[background %in% listA[[i]] & !(background %in% nameB)])
     c = length(background[background %in% nameB & !(background %in% listA[[i]])])
     d = length(background[!(background %in% c(listA[[i]], nameB))])
-    
     fish.mat <- matrix(c(a, c, b, d), nrow = 2, ncol = 2)
     fish <- fisher.test(fish.mat, alternative = "greater")
     number[[i]] = fish$p.value
@@ -65,14 +96,63 @@ final.results= do.call(rbind,q_scale_groups)
 tfs=final.results[final.results[,4]<=0.10,]
 tfs=unique(tfs[order(unlist(tfs[,4])),])
 tfs=as.character(unique(tfs[tfs[,4]<=0.10,1]))
+```
+
+Plot the TFs
+
+```{r}
+
+usedf=as.data.frame(final.results[final.results[,1]%in%tfs,])
+usedf=usedf[which(usedf[,4]<1),]
+s_object=as.numeric(usedf[,4])
+logs_object=log10(s_object)
+
+usedf=cbind(usedf,-logs_object)
+
+colnames(usedf)=c('gene','group','p_value','q_value','size')
+usedf[,1]=as.character(unlist(usedf[,1]))
+usedf[,2]=as.character(unlist(usedf[,2]))
+
+TF_plot <- ggplot(data = usedf, aes(x = group, y = gene, size = size, color = size)) +
+  geom_point() +
+  xlab("X-axis") +
+  ylab("Y-axis") +
+  ggtitle("TF") +
+  scale_color_gradient(low = "blue", high = "red", name = "q-value",
+                       labels = expression(10^0, 10^-1, 10^-2, 10^-3, 10^-4)) +
+  scale_size_continuous(name = "q-value",
+                        labels = expression(10^0, 10^-1, 10^-2, 10^-3, 10^-4)) +
+  theme(
+    axis.line = element_blank(),
+    axis.title = element_blank(),
+    panel.grid = element_blank(),
+    legend.title = element_text(size = 20),
+    legend.text = element_text(size = 18),
+    axis.text.x = element_text(size = 14),
+    axis.text.y = element_text(size = 14),
+    plot.title = element_text(size = 24)) +
+  guides(
+    size = guide_legend(reverse = TRUE))
+
+TF_plot
+```
 
 
 
-# Define your list of gene names
+#### Step 3: Analyze and Filter TFs
+
+For each TF, check if their target gene lists overlap significantly with the target lists of other TFs.
+If a pair of TFs has a high overlap in target genes, select the TF with the higher standard deviation of expression.
+Delete the other TF from the analysis to reduce redundancy.
+
+```{r}
+load("fitnb.RData")
+test=rownames(fit.nb5000)
+test.split2<-cbind(test,1)
+name<-str_split_fixed(test.split2[,1],"-",2)
+rownames(fit.nb5000)<-name[,2]
+
 tf_results <- tfs
-
-
-
 
 TF.hDB2=TF.hDB[tf_results]
 final.results=c(NULL)
@@ -111,14 +191,14 @@ final.results = do.call(rbind, q_scale_groups)
 
 final.results[final.results[,4]<=10^-20,]
 
-head(fit.nb5000)
 # Filter final.results based on the q_value condition
 filtered_results <- final.results[final.results[,4] <= 10^-20, ]
 gene_pairs=filtered_results[,1:2]
 
 # Initialize a vector to store the gene with the lower sd
-lower_sd_gene <- vector("character", nrow(gene_pairs))
 
+lower_sd_gene <- vector("character", nrow(gene_pairs))
+higher_sd_gene <- vector("character", nrow(gene_pairs))
 # Loop through each pair of genes
 for (i in 1:nrow(gene_pairs)) {
   gene1 <- gene_pairs[i, 1][[1]]
@@ -146,10 +226,13 @@ genes_to_remove=unlist(unique(filtered_results_with_sd[,5]))
 
 tf_results2 <- tf_results[!tf_results %in% genes_to_remove]
 
-
+print(tf_results2)
 saveRDS(tf_results2,"tfs.rds")
 
 tf_fit=fit.nb5000[tf_results2,]
+
 write.csv(tf_fit, file = "tf_fit.csv", row.names = TRUE) #save data for fitting
+
+```
 
 
