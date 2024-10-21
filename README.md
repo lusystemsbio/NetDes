@@ -1,37 +1,44 @@
 # NetDes
-Network inference and optimization using Dynamical equation simulations
 
-NetDes is a computational method for modeling gene regulatory networks (GRNs) using time-series scRNA-seq data. It infers pseudotime, identifies gene expression trajectories, clusters genes, and detects key transcription factors (TFs). A GRN is constructed and refined using ordinary differential equations (ODEs), enabling dynamic simulations and analysis of GRN-driven cell state transitions.
+#### <ins>Net</ins>work inference and optimization using <ins>D</ins>ynamical <ins>e</ins>quation <ins>s</ins>imulations
+
+NetDes is a computational method for optimizing gene regulatory networks (GRNs) of core transcription factor (TF) based on gene expression time trajectories. NetDes was specifically designed for analyzing time-series scRNA-seq data. The NetDes pipeline contains the following steps. 
+
+* (1) NetDes calculates smoothed gene expression trajectories along inferred pseudotime.
+
+* (2) Genes are then clustered according to the trajectories.
+
+* (3) Core TFs are inferred for each gene cluster using gene set analysis and TF-target gene relationship. 
+
+* (4) An initial GRN of core TFs is constructed according to TF-target gene relationship, where target genes also belong to the core TFs.
+
+* (5) Network optimization that refines the GRN and constructs a dynamical model using ordinary differential equations (ODEs).
+
+* (6) Dynamical systems modeling, such as gene perturbation simulations, signal driving simulations, network coarse-graining.
 
 ## Installation
-To install NetDes, Python version 3.9 or greater is required.
+Python version 3.9 or greater is required.
 
-### Install from PyPi (recommended)
+#### Install from PyPi (recommended)
 To install the most recent release, run
 
 `pip install NetDes`
 
-### Install with github
+#### Install with github
 * Git clone the [NetDes repository](https://github.com/lusystemsbio/NetDes), cd to the `NetDes` directory, and run
 
 `pip install .`
 
 ## Tutorials
 
-### Prepare
+[Processing gene expression time trajectories using scRNA-seq data](tutorials/R_dataprocess/1_Trajectores_and_clusters.html): This script illustrates the steps to process input scRNA-seq data, obtain smoothed gene expression time trajectories, and cluster genes based on the trajectories. (Steps 1 and 2)
 
-[Data Pre-processing, Gene Expression Smoothing and Clustering ](tutorials/R_dataprocess/1_Trajectores_and_clusters.html): This tutorial walks through the process of inputting scRNA-seq data, processing it, and obtaining smooth gene expression trajectories and clustering them.
+[Inferring core TFs](tutorials/R_dataprocess/2_TFs_identify.html): This script shows the inference of core transcription factors using Fisher's exact test. (Step 3)
 
-[TFs Identification](tutorials/R_dataprocess/2_TFs_identify.html): This tutorial demonstrates how to use Fisher's exact test to identify core transcription factors.
+[Initial GRN Building](tutorials/R_dataprocess/3_InitialGRN.html): This script illustrates how to build an initial GRN using TF-target gene databases like Rcistarge, TRRUST, and NetAct. (Step 4)
 
-### Network inferring and downstream analysis
-[Initial GRN Building](tutorials/R_dataprocess/3_InitialGRN.html): Learn how to load databases like Rcistarge, TRRUST, and NetAct to construct the initial gene regulatory network.
+[GRN optimization and Simulation](tutorials/tutorial.html): This tutorial page shows the NetDes' usage for network optimization and simulation. The user input includes pseudotime, smoothed gene expression trajectories, and an initial GRN. An example was given for simulated data of a small GRN, which one can generate with [this script.](tutorials/datasimulation.html) (Steps 5 and 6)
 
+[Benchmarking](tutorials/R_dataprocess/4_GRN_evaluation.html): This script explains the steps for *in-silico* benchmarking
 
-[GRN Inferring and Simulation](tutorials/tutorial.html): This tutorial covers how to use pseudotime information, smoothed gene expression trajectories, and the initial GRN for inference and simulation. It includes a practical example using synthetic data, which you can generate with [this script.](tutorials/datasimulation.html)
-
-[Network Evaluation](tutorials/R_dataprocess/4_GRN_evaluation.html): After building the optimized GRN, this tutorial explains how to evaluate its performance through simulations.
-
-[Coarse-graining the Network](tutorials/R_dataprocess/5_Coarse_graining.html): This tutorial walks through the process of coarse-graining the optimized GRN into a smaller circuit.
-
-
+[Network Coarse-graining](tutorials/R_dataprocess/5_Coarse_graining.html): This script shows the process of coarse-graining the optimized GRN into a small gene circuit using [SacroGrachi](https://github.com/lusystemsbio/SacoGraci). (Step 6)
