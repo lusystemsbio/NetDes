@@ -1,6 +1,6 @@
 ---
-title: "1.Trajectories_infer_cluster"
-author: "YUKAI YOU"
+title: "1. Processing gene expression time trajectories"
+author: "Yukai You"
 date: '2024-10-09'
 output:
   html_document: default
@@ -11,11 +11,12 @@ output:
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-Before proceeding, ensure that all required packages and functions from Function.R are loaded.
+Before proceeding, ensure that all required packages and functions from *Function.R* are loaded.
 
-#### **Step 1: Load the scRNA-seq Data Start by loading the necessary scRNA-seq data.** 
+#### **Step 1: Pre-processing scRNA-seq Data.** 
 
-The raw data should be processed with SCTransform for pseudotime analysis.
+Load scRNA-seq raw counts data 
+
 
 ```{r,eval=FALSE}
 RAWresults<- read_csv("raw_counts.csv")
@@ -27,7 +28,7 @@ RAWresults=RAWresults[,rownames(meta.data)]
 roundRAW=round(RAWresults)
 ```
 
-Raw data process with SCTransform for analyzing pseudotime.
+The raw data are processed with SCTransform for pseudotime analysis.
 
 ```{r,eval=FALSE}
 pbmc <- CreateSeuratObject(counts = roundRAW)
@@ -36,9 +37,10 @@ pbmc2 <- SCTransform(pbmc, method = "nb",ncells = 5000, variable.features.n = 30
 
 ```
 
-#### Step 2: I dentify HVGs
+#### Step 2: Identifying highly variable genes (HVGs)
 
-Occasionally, gene names containing "-" may be altered during processing. Make sure to modify them to maintain consistency with the `pbmc` dataset results. Additionally, calculate the top 500 and top 5000 highly variable genes (HVGs) using the **scran** package.
+Occasionally, gene names containing "-" may be altered during processing. Make sure to modify them to maintain consistency with the `pbmc` dataset results. In addition, calculate the top 500 and top 5000 HVGs using the **scran** package.
+(ML: what are the `pbmc` dataset results?)
 
 ```{r,eval=FALSE}
 rownames(roundRAW)=rownames(pbmc)
@@ -53,9 +55,9 @@ top5000=names(alt.fit@metadata[["var"]][order(alt.fit@listData[["bio"]],decreasi
 
 ```
 
-#### Step 3: Pseudotime Calculation
+#### Step 3: Pseudotime inference 
 
-Once the top 500 HVGs are identified, use the processed scRNA-seq data to compute pseudotime.
+Once the top 500 HVGs are identified, use the processed scRNA-seq data to compute pseudotime. Here, **slingshot** was applied. 
 
 ```{r,eval=FALSE}
 logu=pbmc2@assays[["SCT"]]@scale.data  ### dataset
@@ -75,9 +77,9 @@ ori_tbl <- tibble(cell = colnames(sce), pseudotime = rescale(colData(fit_ori)$sl
 
 ```
 
-#### Step 4: Sparse Pseudotime Ranges
+#### Step 4: Sparse pseudotime ranges
 
-In this case, certain pseudotime ranges have sparse cell representation. For better fitting, some cells may need to be removed, and pseudotime should be rescaled accordingly.
+Here, certain pseudotime ranges have sparse cell representation. For better fitting, some cells may need to be removed, and pseudotime should be rescaled accordingly.
 
 ```{r,eval=FALSE}
 
@@ -99,9 +101,9 @@ p<-ggplot(data.frame(ori_tbl2), aes(x=pseudotime, y=0,colour= as.factor(meta.dat
 p
 ```
 
-#### Step 5: Smooth Gene Expression Trajectories
+#### Step 5: Smoothing gene expression trajectories
 
-Use pseudotimeDE to fit the top 5000 HVGs. If **BiocParallel** is not utilized, adjust the cores setting to `mc.cores = 1` if necessary.
+Apply **pseudotimeDE** to obtain smoothed gene expression trajectories for the top 5000 HVGs. If **BiocParallel** is not utilized, adjust the cores setting to `mc.cores = 1` if necessary.
 
 ```{r,eval=FALSE}
 
@@ -114,7 +116,7 @@ system.time(res_fix.raw5000 <- PseudotimeDE::runPseudotimeDE(gene.vec = top5000,
 
 ```
 
-Obtain smoothed gene expression trajectories over time.
+Obtain smoothed gene expression trajectories along the inferred pseudotime.
 
 ```{r,eval=FALSE}
 fit.nb5000=matrix(NA,ncol=ncol(RAW.sce),nrow =5000 )
@@ -126,9 +128,9 @@ for( i in 1:5000){
 save(fit.nb5000,file="fitnb.RData")
 ```
 
-#### Step 6: Gene Filtering
+#### Step 6: Gene filtering
 
-Filter out genes with a standard deviation smaller than 0.25 and retain the key genes for further analysis
+Filter out genes with a standard deviation smaller than 0.25, and retain the key genes for further analysis
 
 ```{r,eval=FALSE}
 ord.u=ori_tbl2[order(pseudotime.u),]
@@ -152,7 +154,7 @@ gene.same=rownames(sdvar.same[which((sdvar.same[,1]<=0.25)),])
 
 #### Step 7: Clustering and Visualization
 
-Cluster the gene expression trajectories into 7 distinct clusters. Finally, visualize the clustering results.
+Cluster the gene expression trajectories into 7 distinct clusters.
 
 ```{r,eval=FALSE}
 
@@ -185,7 +187,7 @@ saveRDS(ori_tbl2,file="ori_tbl.rds")
 #cls=readRDS(file="2geneclusters_dis_02_025.rds")
 ```
 
-Finally, visualize the clustering results.
+Visualize the clustering results.
 
 ```{r}
 library(MASS)

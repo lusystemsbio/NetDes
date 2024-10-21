@@ -1,6 +1,6 @@
 ---
-title: "3.Rcistarget_initial GRN"
-author: "YUKAI YOU"
+title: "3.Construction of an initial GRN"
+author: "Yukai You"
 date: '2024-10-10'
 output:
   html_document: default
@@ -11,9 +11,9 @@ output:
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-#### Step 1: Perform Motif Enrichment Analysis Using RcisTarget
+#### Step 1: Perform TF binding motif enrichment analysis Using RcisTarget
 
-Input Gene Clusters and Load Data
+Input gene clusters and load data
 
 ```{r,echo=FALSE, results="hide", message=FALSE, warning=FALSE}
 source("Function.R")
@@ -26,7 +26,7 @@ data(motifAnnotations_hgnc)
 
 ```
 
-Wel use **RcisTarget** to perform motif enrichment analysis for each gene cluster. This analysis will help you identify transcription factor motifs that are significantly enriched in each cluster.
+We used **RcisTarget** to identify enriched TF binding motifs for each gene cluster.
 
 ```{r,eval=FALSE}
 motifRankings <- importRankings("hg19-tss-centered-10kb-7species.mc9nr.feather")
@@ -66,11 +66,11 @@ saveRDS(motiftabletotal, file = "motiftabletotal.rds")
 
 ```
 
-#### Step 2: Build the Initial GRN Using the Motif Enrichment Results and TF Lists
+#### Step 2: Build an initial GRN
 
-You need a list of known transcription factors (TFs) that you want to include in your GRN (obtained from 2.TFs finding).
+We built an initial GRN of the core TFs (see Tutorial Part 2) according to the outcomes of motif enrichment analysis. 
 
-The Normalized Enrichment Score (NES) is used to filter significant motifs. You can choose a threshold (e.g., NES \> 1) to select only the most enriched motifs for your GRN.
+If needed, the Normalized Enrichment Score (NES) from **RCisTarget** could be used to select the most significant motifs (*e.g.*, NES \> 1). 
 
 ```{r}
 motifwgenetotal <- readRDS("motifwgenetotal.rds")
@@ -97,9 +97,9 @@ dtotal.unique[,3]=1
 plot_network(dtotal.unique)
 ```
 
-Step 3: Expand the GRN Using TRRUST and NetAct Databases
+#### Step 3: Expand the GRN using TRRUST and/or NetAct TF-target gene databases
 
-In this step, you will integrate additional interactions from external databases like TRRUST and NetAct to further refine your initial GRN.
+Additional TF-TF interactions are incorporated into the initial GRN using a TF-target gene databases. Here shows an example to use TRRUST.
 
 ```{r}
 
@@ -122,9 +122,9 @@ write.csv(dtotal_final, "InitialGRN.csv")
 
 ```
 
-You will get 'InitialGRN.csv' which containing the no-sign initial GRN.
+The output 'InitialGRN.csv' contains the topology (*i.e.*, information regarding source, target, interaction for each edge) of the initial GRN. At this stage, no activating/inhibiting nature of each edge is specified, so the "interaction" values are set to be all 1.
 
-Also, you can combine the NetAct database into the initial GRN.
+Another example where interaction data from NetAct are incorporated into the initial GRN.
 
 ```{r}
 data(hDB)

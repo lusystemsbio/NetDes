@@ -35,10 +35,10 @@ To install the most recent release, run
 
 [Inferring core TFs](tutorials/R_dataprocess/2_TFs_identify.html): This script shows the inference of core transcription factors using Fisher's exact test. (Step 3)
 
-[Initial GRN Building](tutorials/R_dataprocess/3_InitialGRN.html): This script illustrates how to build an initial GRN using TF-target gene databases like Rcistarge, TRRUST, and NetAct. (Step 4)
+[Initial GRN construction](tutorials/R_dataprocess/3_InitialGRN.html): This script illustrates how to build an initial GRN using TF-target gene databases like Rcistarge, TRRUST, and NetAct. (Step 4)
 
-[GRN optimization and Simulation](tutorials/tutorial.html): This tutorial page shows the NetDes' usage for network optimization and simulation. The user input includes pseudotime, smoothed gene expression trajectories, and an initial GRN. An example was given for simulated data of a small GRN, which one can generate with [this script.](tutorials/datasimulation.html) (Steps 5 and 6)
+[GRN optimization and simulation](tutorials/tutorial.html): This tutorial page shows the NetDes' usage for network optimization and simulation. The user input includes pseudotime, smoothed gene expression trajectories, and an initial GRN. An example was given for simulated data of a small GRN, which one can generate with [this script.](tutorials/datasimulation.html) (Steps 5 and 6)
 
 [Benchmarking](tutorials/R_dataprocess/4_GRN_evaluation.html): This script explains the steps for *in-silico* benchmarking
 
-[Network Coarse-graining](tutorials/R_dataprocess/5_Coarse_graining.html): This script shows the process of coarse-graining the optimized GRN into a small gene circuit using [SacroGrachi](https://github.com/lusystemsbio/SacoGraci). (Step 6)
+[Network coarse-graining](tutorials/R_dataprocess/5_Coarse_graining.html): This script shows the process of coarse-graining the optimized GRN into a small gene circuit using [SacroGraci](https://github.com/lusystemsbio/SacoGraci). (Step 6)

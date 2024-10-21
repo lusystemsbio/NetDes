@@ -1,6 +1,6 @@
 ---
-title: "Racipe_simulation and GRN chosing"
-author: "YUKAI YOU"
+title: "RACIPE simulations and top GRN selection"
+author: "Yukai You"
 date: '2024-10-11'
 output: html_document
 ---
@@ -9,11 +9,9 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-#### **Step 1: Inputting GRNs into RACIPE**
+#### Step 1: Inputting GRNs into RACIPE
 
-After obtaining the GRN results, you can use RACIPE to model the dynamics of each GRN. First, input all GRNs into the list `Networklist_noadd`. This step prepares your networks for further analysis and comparison with the scRNA-seq data.
-
-You still need source the function at the beginning.
+Once the optimal GRNs are obtained, one can use RACIPE to simulate the gene expression dynamics of each GRN. First, input all GRNs into the list `Networklist_noadd`. This step prepares the networks for further analysis and comparison with the scRNA-seq data.
 
 ```{r,echo=FALSE, results="hide", message=FALSE, warning=FALSE}
 source("Function.R")
@@ -50,15 +48,17 @@ for (i2 in 1:15){
 saveRDS(NetDes_noadd_results,file="Racipe_simulation.rds")
 ```
 
-**Step 2: Mapping GRN Dynamics to scRNA-seq Trajectories**
+**Step 2: Mapping GRN Dynamics to scRNA-seq gene expression time trajectories**
 
-Once the GRNs are modeled, you can compare the network dynamics to the smoothed gene expression trajectories from scRNA-seq data. In this step, map the results will shows in the following metrics:
+Once the GRNs are simulated, one can compare the network gene expression dynamics to the smoothed gene expression trajectories from the scRNA-seq data. The quality of the mapping will be evaluated by the following metrics:
 
 -   `percentage_NetDesnoadd`: The mapping percentage across all data dimensions.
 
 -   `percentage_NetDesnoadd_3D`: The mapping percentage for the first three principal components (PCs).
 
--   `NetDesnoadd_entropy`: The entropy we defined for each GRN, representing the diversity of its network dynamics.
+-   `NetDesnoadd_entropy`: GRN entropy, representing the evenness of number of RACIPE models mapped to each reference cell state.
+
+[ML: entropy not defined in Methods; no reference cell states are mentioned.]
 
 ```{r}
 library(ggpointdensity)
@@ -150,7 +150,7 @@ entropy_network=results_NetDesnoadd[2:nrow(results_NetDesnoadd),]
 NetDesnoadd_entropy=infor_matrix(entropy_network)
 ```
 
-Normally based on percentage_NetDesnoadd_3D you can pick one network with highest mapping percentage.
+The best GRN can be typically selected with the highest percentage_NetDesnoadd_3D score.
 
 ```{r}
 

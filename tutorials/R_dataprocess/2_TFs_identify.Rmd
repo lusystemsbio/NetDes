@@ -1,6 +1,6 @@
 ---
-title: "2.TFs finding"
-author: "YUKAI YOU"
+title: "2. Inference of core TFs"
+author: "Yukai You"
 date: '2024-10-09'
 output: html_document
 editor_options: 
@@ -12,11 +12,10 @@ editor_options:
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-#### Step 1: Load the NetAct Database and Cluster Results 
+#### Step 1: Load the TF-target gene database from NetAct and gene clustering results 
 
-Begin by loading the NetAct database and the cluster results.
-For the database, retain only the transcription factors (TFs) that have more than 5 target genes.
-In the cluster results, remove Cluster 7, as this cluster consists primarily of noise genes.
+For the TF-target gene database from NetAct, retain only the transcription factors (TFs) that have more than 5 target genes.
+In this example, we didn't consider cluster #7 due to high noises in gene expression. 
 
 ```{r}
 
@@ -48,9 +47,10 @@ for( i in 1:length(cluster.results.rr)){
 }
 ```
 
-#### Step 2: Apply Fisher's Exact Test 
+#### Step 2: Inference of core TFs using Fisher's Exact Test 
 
-Perform a Fisher's exact test to identify genes with a q-value smaller than 0.1. We only consider the TFs within the 6 clusters.
+For each of the 6 gene clusters, we performed Fisher's exact tests to identify enriched TFs with q-value smaller than 0.1. We excluded TFs that are absent from the six gene clusters. 
+(ML: verify this)
 
 ```{r}
 TF=c(intersect(b2,names(hDB)))
@@ -98,7 +98,7 @@ tfs=unique(tfs[order(unlist(tfs[,4])),])
 tfs=as.character(unique(tfs[tfs[,4]<=0.10,1]))
 ```
 
-Plot the TFs
+Plotting the core TFs
 
 ```{r}
 
@@ -138,12 +138,10 @@ TF_plot
 ```
 
 
+#### Step 3: Analyzing and filtering TFs
 
-#### Step 3: Analyze and Filter TFs
-
-For each TF, check if their target gene lists overlap significantly with the target lists of other TFs.
-If a pair of TFs has a high overlap in target genes, select the TF with the higher standard deviation of expression.
-Delete the other TF from the analysis to reduce redundancy.
+For each TF, check if its target genes overlap significantly with the target genes of another TF.
+If the target genes from two TFs significantly overlap, we selected the TF with the higher standard deviation of expression and excluded the other.
 
 ```{r}
 load("fitnb.RData")
@@ -234,5 +232,3 @@ tf_fit=fit.nb5000[tf_results2,]
 write.csv(tf_fit, file = "tf_fit.csv", row.names = TRUE) #save data for fitting
 
 ```
-
-
