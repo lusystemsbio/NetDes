@@ -50,7 +50,6 @@ for( i in 1:length(cluster.results.rr)){
 #### Step 2: Inference of core TFs using Fisher's Exact Test 
 
 For each of the 6 gene clusters, we performed Fisher's exact tests to identify enriched TFs with q-value smaller than 0.1. We excluded TFs that are absent from the six gene clusters. 
-(ML: verify this)
 
 ```{r}
 TF=c(intersect(b2,names(hDB)))

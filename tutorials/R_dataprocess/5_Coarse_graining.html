@@ -9,11 +9,11 @@
 <meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
 
 
-<meta name="author" content="YUKAI YOU" />
+<meta name="author" content="Yukai You" />
 
 <meta name="date" content="2024-10-11" />
 
-<title>5.Coarse-graining for the best GRN</title>
+<title>5.GRN coarse-graining</title>
 
 <script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
 // be compatible with the behavior of Pandoc < 2.8).
@@ -5659,18 +5659,21 @@ pre code {
 
 
 
-<h1 class="title toc-ignore">5.Coarse-graining for the best GRN</h1>
-<h4 class="author">YUKAI YOU</h4>
+<h1 class="title toc-ignore">5.GRN coarse-graining</h1>
+<h4 class="author">Yukai You</h4>
 <h4 class="date">2024-10-11</h4>
 
 </div>
 
 
-<div id="step-1-loading-the-grn-for-coarse-graining" class="section level4">
-<h4>Step 1: Loading the GRN for Coarse-Graining</h4>
-<p>Start by loading the gene regulatory network (GRN) that you want to
-perform coarse-graining on. The GRN should be in a format that allows
-you to identify and model the interactions between genes.</p>
+<div id="step-1-loading-the-grn-for-network-coarse-graining" class="section level4">
+<h4>Step 1: Loading the GRN for network coarse-graining</h4>
+<p>Network coarse-graining can be performed by applying
+<strong>SacoGraci</strong> package.</p>
+<p>Start by loading the gene regulatory network (GRN) to perform
+coarse-graining. The user input is a GRN in the format of network
+topology (<em>i.e.</em>, information regarding source, target and
+interaction type for each edge).</p>
 <pre class="r"><code>library(readr)
 library(SacoGraci)
 Network_results&lt;- read_csv(&quot;~/Desktop/Singlecell6.25/Finally fitting /network/network_828_noadd_33.csv&quot;) </code></pre>
@@ -5691,21 +5694,22 @@ Network_results&lt;- read_csv(&quot;~/Desktop/Singlecell6.25/Finally fitting /ne
 Network_results=as.data.frame(Network_results[,1:3])
 colnames(Network_results)=c(&quot;Source&quot;,&quot;Target&quot;,&quot;Type&quot;)</code></pre>
 </div>
-<div id="step-2-deep-modeling-with-racipe" class="section level4">
-<h4>Step 2: Deep Modeling with RACIPE</h4>
+<div id="step-2-racipe-simulation-of-the-large-grn" class="section level4">
+<h4>Step 2: RACIPE simulation of the large GRN</h4>
 <pre class="r"><code>data_exp = gen_RACIPE(Network_results, nModels=1000) ## nModels same to the modelsCGr in opt_SA
 saveRDS(data_exp,file=&quot;data_exp.rds&quot;)</code></pre>
 </div>
-<div id="step-3-clustering-genes" class="section level4">
-<h4>Step 3: Clustering Genes</h4>
-<p>After running the RACIPE simulations, the next step is to cluster the
-genes. You can either:</p>
+<div id="step-3-gene-clustering" class="section level4">
+<h4>Step 3: Gene clustering</h4>
+<p>After running the RACIPE simulations, one can cluster genes using the
+simulated data by either:</p>
 <ul>
-<li><p><strong>Manually cluster the genes</strong> by inspecting their
-gene expression patterns, or</p></li>
-<li><p><strong>Use a heatmap</strong> to visualize and automatically
-cluster the gene expression data.</p></li>
+<li><p><strong>Applying a clustering algorithm</strong>, or</p></li>
+<li><p><strong>Manually providing gene grouping</strong></p></li>
 </ul>
+<p>Below shows an example where gene grouping is provided based on
+visual inspection of simulated gene expression patterns from RACIPE
+simulations of the large GRN.</p>
 <pre class="r"><code>data_exp=readRDS(&quot;data_exp.rds&quot;)
 #gen_heatmap_hca(logscData = data_exp) 
 gene_list = list()
@@ -5719,12 +5723,12 @@ gene_list[[3]]=c(&quot;GATA3&quot;,&quot;RARA&quot;,&quot;ZEB1&quot;,&quot;KLF8&
 #data_processed = output_processed$data
 #gene_list = output_processed$gene_list</code></pre>
 </div>
-<div id="step-4-circuit-inference" class="section level4">
-<h4>Step 4: Circuit Inference</h4>
-<p>After clustering the genes, infer the regulatory circuits. You need
-determine how many clusters are present, and input this number into the
-<code>modClustHCA</code> function using the <code>numbClust</code>
-parameter to further refine the inferred circuits.</p>
+<div id="step-4-inference-of-the-coarse-grained-circuits" class="section level4">
+<h4>Step 4: Inference of the coarse-grained circuits</h4>
+<p>To infer coarse-grained circuits, one needs to first determine how
+many clusters are present, as specified in the <code>numbClust</code>
+argument in the <code>modClustHCA</code> function. See
+<strong>SacoGraci</strong> documentation for more details.</p>
 <pre class="r"><code>output_model_grouping = modClustHCA(logscData = data_exp,numbClust = 3)  # model clustering with HCA, we specify 3 clusters
 data_reordered = output_model_grouping$dataRearr
 clusterRef = output_model_grouping$clInd  # cluster indices of all models
@@ -5740,8 +5744,8 @@ circuit = opt_SA(network_top = Network_results, data = data_processed, clusterRe
                   output = &quot;Results&quot;, nRepeat= 1, modelsCGr = 100, 
                   maxT=400, threshT=40, decayRate1=0.8, decayRate2=0.6, iter_per_temp=3)## modelsCGr same to the nModels in gen_RACIPE
 write.csv(circuit, &quot;circuit.csv&quot;, row.names = FALSE)</code></pre>
-<div id="plot-the-results" class="section level5">
-<h5>Plot the results</h5>
+<div id="visualizing-the-optimized-coarse-grained-circuits" class="section level5">
+<h5>Visualizing the optimized coarse-grained circuits</h5>
 <pre class="r"><code>circuit=read_csv(&quot;circuit.csv&quot;)</code></pre>
 <pre><code>## Rows: 4 Columns: 3
 ## ── Column specification ────────────────────────────────────────────────────────
@@ -5753,8 +5757,8 @@ write.csv(circuit, &quot;circuit.csv&quot;, row.names = FALSE)</code></pre>
 <pre class="r"><code>circuit$Source &lt;- sapply(circuit$Source, function(x) paste(gene_list[[x]], collapse = &quot;, &quot;))
 circuit$Target &lt;- sapply(circuit$Target, function(x) paste(gene_list[[x]], collapse = &quot;, &quot;))
 plot_network(circuit)</code></pre>
-<div id="htmlwidget-3d0259783b0a06c04afc" style="width:100%;height:300px;" class="visNetwork html-widget "></div>
-<script type="application/json" data-for="htmlwidget-3d0259783b0a06c04afc">{"x":{"nodes":{"id":["FOS, HES1, LEF1","POU5F1, TWIST2, SOX2, MYCN, E2F4","GATA3, RARA, ZEB1, KLF8"],"label":["FOS, HES1, LEF1","POU5F1, TWIST2, SOX2, MYCN, E2F4","GATA3, RARA, ZEB1, KLF8"],"font.size":[30,30,30],"value":[1,1,1]},"edges":{"from":["FOS, HES1, LEF1","POU5F1, TWIST2, SOX2, MYCN, E2F4","POU5F1, TWIST2, SOX2, MYCN, E2F4","GATA3, RARA, ZEB1, KLF8"],"to":["GATA3, RARA, ZEB1, KLF8","FOS, HES1, LEF1","GATA3, RARA, ZEB1, KLF8","POU5F1, TWIST2, SOX2, MYCN, E2F4"],"arrows.to.type":["arrow","circle","circle","circle"],"width":[3,3,3,3],"color":["blue","darkred","darkred","darkred"]},"nodesToDataframe":true,"edgesToDataframe":true,"options":{"width":"100%","height":"100%","nodes":{"shape":"dot"},"manipulation":{"enabled":true},"edges":{"arrows":"to"},"layout":{"randomSeed":123},"physics":{"solver":"forceAtlas2Based","stabilization":false}},"groups":null,"width":"100%","height":"300px","idselection":{"enabled":false,"style":"width: 150px; height: 26px","useLabels":true,"main":"Select by id"},"byselection":{"enabled":false,"style":"width: 150px; height: 26px","multiple":false,"hideColor":"rgba(200,200,200,0.5)","highlight":false},"main":null,"submain":null,"footer":null,"background":"rgba(0, 0, 0, 0)","opts_manipulation":{"datacss":"table.legend_table {\n  font-size: 11px;\n  border-width:1px;\n  border-color:#d3d3d3;\n  border-style:solid;\n}\ntable.legend_table td {\n  border-width:1px;\n  border-color:#d3d3d3;\n  border-style:solid;\n  padding: 2px;\n}\ndiv.table_content {\n  width:80px;\n  text-align:center;\n}\ndiv.table_description {\n  width:100px;\n}\n\n.operation {\n  font-size:20px;\n}\n\n.network-popUp {\n  display:none;\n  z-index:299;\n  width:250px;\n  /*height:150px;*/\n  background-color: #f9f9f9;\n  border-style:solid;\n  border-width:1px;\n  border-color: #0d0d0d;\n  padding:10px;\n  text-align: center;\n  position:fixed;\n  top:50%;  \n  left:50%;  \n  margin:-100px 0 0 -100px;  \n\n}","addNodeCols":["id","label"],"editNodeCols":["id","label"],"tab_add_node":"<span id=\"addnode-operation\" class = \"operation\">node<\/span> <br><table style=\"margin:auto;\"><tr><td>id<\/td><td><input id=\"addnode-id\"  type= \"text\" value=\"new value\"><\/td><\/tr><tr><td>label<\/td><td><input id=\"addnode-label\"  type= \"text\" value=\"new value\"><\/td><\/tr><\/table><input type=\"button\" value=\"save\" id=\"addnode-saveButton\"><\/button><input type=\"button\" value=\"cancel\" id=\"addnode-cancelButton\"><\/button>","tab_edit_node":"<span id=\"editnode-operation\" class = \"operation\">node<\/span> <br><table style=\"margin:auto;\"><tr><td>id<\/td><td><input id=\"editnode-id\"  type= \"text\" value=\"new value\"><\/td><\/tr><tr><td>label<\/td><td><input id=\"editnode-label\"  type= \"text\" value=\"new value\"><\/td><\/tr><\/table><input type=\"button\" value=\"save\" id=\"editnode-saveButton\"><\/button><input type=\"button\" value=\"cancel\" id=\"editnode-cancelButton\"><\/button>"},"highlight":{"enabled":false,"hoverNearest":false,"degree":1,"algorithm":"all","hideColor":"rgba(200,200,200,0.5)","labelOnly":true},"collapse":{"enabled":false,"fit":false,"resetHighlight":true,"clusterOptions":null,"keepCoord":true,"labelSuffix":"(cluster)"}},"evals":[],"jsHooks":[]}</script>
+<div id="htmlwidget-7babeb626d65ae0edef9" style="width:100%;height:300px;" class="visNetwork html-widget "></div>
+<script type="application/json" data-for="htmlwidget-7babeb626d65ae0edef9">{"x":{"nodes":{"id":["FOS, HES1, LEF1","POU5F1, TWIST2, SOX2, MYCN, E2F4","GATA3, RARA, ZEB1, KLF8"],"label":["FOS, HES1, LEF1","POU5F1, TWIST2, SOX2, MYCN, E2F4","GATA3, RARA, ZEB1, KLF8"],"font.size":[30,30,30],"value":[1,1,1]},"edges":{"from":["FOS, HES1, LEF1","POU5F1, TWIST2, SOX2, MYCN, E2F4","POU5F1, TWIST2, SOX2, MYCN, E2F4","GATA3, RARA, ZEB1, KLF8"],"to":["GATA3, RARA, ZEB1, KLF8","FOS, HES1, LEF1","GATA3, RARA, ZEB1, KLF8","POU5F1, TWIST2, SOX2, MYCN, E2F4"],"arrows.to.type":["arrow","circle","circle","circle"],"width":[3,3,3,3],"color":["blue","darkred","darkred","darkred"]},"nodesToDataframe":true,"edgesToDataframe":true,"options":{"width":"100%","height":"100%","nodes":{"shape":"dot"},"manipulation":{"enabled":true},"edges":{"arrows":"to"},"layout":{"randomSeed":123},"physics":{"solver":"forceAtlas2Based","stabilization":false}},"groups":null,"width":"100%","height":"300px","idselection":{"enabled":false,"style":"width: 150px; height: 26px","useLabels":true,"main":"Select by id"},"byselection":{"enabled":false,"style":"width: 150px; height: 26px","multiple":false,"hideColor":"rgba(200,200,200,0.5)","highlight":false},"main":null,"submain":null,"footer":null,"background":"rgba(0, 0, 0, 0)","opts_manipulation":{"datacss":"table.legend_table {\n  font-size: 11px;\n  border-width:1px;\n  border-color:#d3d3d3;\n  border-style:solid;\n}\ntable.legend_table td {\n  border-width:1px;\n  border-color:#d3d3d3;\n  border-style:solid;\n  padding: 2px;\n}\ndiv.table_content {\n  width:80px;\n  text-align:center;\n}\ndiv.table_description {\n  width:100px;\n}\n\n.operation {\n  font-size:20px;\n}\n\n.network-popUp {\n  display:none;\n  z-index:299;\n  width:250px;\n  /*height:150px;*/\n  background-color: #f9f9f9;\n  border-style:solid;\n  border-width:1px;\n  border-color: #0d0d0d;\n  padding:10px;\n  text-align: center;\n  position:fixed;\n  top:50%;  \n  left:50%;  \n  margin:-100px 0 0 -100px;  \n\n}","addNodeCols":["id","label"],"editNodeCols":["id","label"],"tab_add_node":"<span id=\"addnode-operation\" class = \"operation\">node<\/span> <br><table style=\"margin:auto;\"><tr><td>id<\/td><td><input id=\"addnode-id\"  type= \"text\" value=\"new value\"><\/td><\/tr><tr><td>label<\/td><td><input id=\"addnode-label\"  type= \"text\" value=\"new value\"><\/td><\/tr><\/table><input type=\"button\" value=\"save\" id=\"addnode-saveButton\"><\/button><input type=\"button\" value=\"cancel\" id=\"addnode-cancelButton\"><\/button>","tab_edit_node":"<span id=\"editnode-operation\" class = \"operation\">node<\/span> <br><table style=\"margin:auto;\"><tr><td>id<\/td><td><input id=\"editnode-id\"  type= \"text\" value=\"new value\"><\/td><\/tr><tr><td>label<\/td><td><input id=\"editnode-label\"  type= \"text\" value=\"new value\"><\/td><\/tr><\/table><input type=\"button\" value=\"save\" id=\"editnode-saveButton\"><\/button><input type=\"button\" value=\"cancel\" id=\"editnode-cancelButton\"><\/button>"},"highlight":{"enabled":false,"hoverNearest":false,"degree":1,"algorithm":"all","hideColor":"rgba(200,200,200,0.5)","labelOnly":true},"collapse":{"enabled":false,"fit":false,"resetHighlight":true,"clusterOptions":null,"keepCoord":true,"labelSuffix":"(cluster)"}},"evals":[],"jsHooks":[]}</script>
 </div>
 </div>
 

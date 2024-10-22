@@ -68,9 +68,9 @@ saveRDS(motiftabletotal, file = "motiftabletotal.rds")
 
 #### Step 2: Build an initial GRN
 
-We built an initial GRN of the core TFs (see Tutorial Part 2) according to the outcomes of motif enrichment analysis. 
+We built an initial GRN of the core TFs (see Tutorial Part 2) according to the outcomes of motif enrichment analysis.
 
-If needed, the Normalized Enrichment Score (NES) from **RCisTarget** could be used to select the most significant motifs (*e.g.*, NES \> 1). 
+If needed, the Normalized Enrichment Score (NES) from **RCisTarget** could be used to select the most significant motifs (*e.g.*, NES \> 1).
 
 ```{r}
 motifwgenetotal <- readRDS("motifwgenetotal.rds")

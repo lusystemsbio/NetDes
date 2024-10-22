@@ -9,11 +9,11 @@
 <meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
 
 
-<meta name="author" content="YUKAI YOU" />
+<meta name="author" content="Yukai You" />
 
 <meta name="date" content="2024-10-09" />
 
-<title>1.Trajectories_infer_cluster</title>
+<title>1. Processing gene expression time trajectories</title>
 
 <script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
 // be compatible with the behavior of Pandoc < 2.8).
@@ -356,20 +356,19 @@ pre code {
 
 
 
-<h1 class="title toc-ignore">1.Trajectories_infer_cluster</h1>
-<h4 class="author">YUKAI YOU</h4>
+<h1 class="title toc-ignore">1. Processing gene expression time
+trajectories</h1>
+<h4 class="author">Yukai You</h4>
 <h4 class="date">2024-10-09</h4>
 
 </div>
 
 
 <p>Before proceeding, ensure that all required packages and functions
-from Function.R are loaded.</p>
-<div id="step-1-load-the-scrna-seq-data-start-by-loading-the-necessary-scrna-seq-data." class="section level4">
-<h4><strong>Step 1: Load the scRNA-seq Data Start by loading the
-necessary scRNA-seq data.</strong></h4>
-<p>The raw data should be processed with SCTransform for pseudotime
-analysis.</p>
+from <em>Function.R</em> are loaded.</p>
+<div id="step-1-pre-processing-scrna-seq-data." class="section level4">
+<h4><strong>Step 1: Pre-processing scRNA-seq Data.</strong></h4>
+<p>Load scRNA-seq raw counts data</p>
 <pre class="r"><code>RAWresults&lt;- read_csv(&quot;raw_counts.csv&quot;)
 meta.data&lt;-read.delim(&quot;cell_metadata_cols.tsv&quot;,stringsAsFactors= F)
 names&lt;-as.character(as.matrix(RAWresults[,1]))
@@ -377,18 +376,19 @@ RAWresults&lt;-as.matrix(RAWresults[,2:36045])
 rownames(RAWresults)=names
 RAWresults=RAWresults[,rownames(meta.data)]
 roundRAW=round(RAWresults)</code></pre>
-<p>Raw data process with SCTransform for analyzing pseudotime.</p>
+<p>The raw data are processed with SCTransform for pseudotime
+analysis.</p>
 <pre class="r"><code>pbmc &lt;- CreateSeuratObject(counts = roundRAW)
 pbmc &lt;- PercentageFeatureSet(pbmc, pattern = &quot;^MT-&quot;, col.name = &quot;percent.mt&quot;)# store mitochondrial percentage in object meta data
 pbmc2 &lt;- SCTransform(pbmc, method = &quot;nb&quot;,ncells = 5000, variable.features.n = 3000,verbose = TRUE,return.only.var.genes = F,theta_estimation_fun=&quot;theta.mm&quot;)</code></pre>
 </div>
-<div id="step-2-i-dentify-hvgs" class="section level4">
-<h4>Step 2: I dentify HVGs</h4>
+<div id="step-2-identifying-highly-variable-genes-hvgs" class="section level4">
+<h4>Step 2: Identifying highly variable genes (HVGs)</h4>
 <p>Occasionally, gene names containing “-” may be altered during
 processing. Make sure to modify them to maintain consistency with the
-<code>pbmc</code> dataset results. Additionally, calculate the top 500
-and top 5000 highly variable genes (HVGs) using the
-<strong>scran</strong> package.</p>
+<code>pbmc</code> dataset results. In addition, calculate the top 500
+and top 5000 HVGs using the <strong>scran</strong> package. (ML: what
+are the <code>pbmc</code> dataset results?)</p>
 <pre class="r"><code>rownames(roundRAW)=rownames(pbmc)
 roundRAW=as.matrix(roundRAW[,rownames(meta.data)])
 roundRAW.log=as.matrix(log2(roundRAW+1))
@@ -399,10 +399,11 @@ alt.fit &lt;- modelGeneVar(sce, design = design)
 top500=names(alt.fit@metadata[[&quot;var&quot;]][order(alt.fit@listData[[&quot;bio&quot;]],decreasing = TRUE)])[1:500]
 top5000=names(alt.fit@metadata[[&quot;var&quot;]][order(alt.fit@listData[[&quot;bio&quot;]],decreasing = TRUE)])[1:5000]</code></pre>
 </div>
-<div id="step-3-pseudotime-calculation" class="section level4">
-<h4>Step 3: Pseudotime Calculation</h4>
+<div id="step-3-pseudotime-inference" class="section level4">
+<h4>Step 3: Pseudotime inference</h4>
 <p>Once the top 500 HVGs are identified, use the processed scRNA-seq
-data to compute pseudotime.</p>
+data to compute pseudotime. Here, <strong>slingshot</strong> was
+applied.</p>
 <pre class="r"><code>logu=pbmc2@assays[[&quot;SCT&quot;]]@scale.data  ### dataset
 logu.500=logu[which(rownames(logu)%in%top500),]#get the top500 gene dataset
 save(logu.500, file = &quot;top500pbmc.RData&quot;)
@@ -419,10 +420,10 @@ pseudotime.u = rescale(colData(fit_ori)$slingPseudotime_1)
 ori_tbl &lt;- tibble(cell = colnames(sce), pseudotime = rescale(colData(fit_ori)$slingPseudotime_1))</code></pre>
 </div>
 <div id="step-4-sparse-pseudotime-ranges" class="section level4">
-<h4>Step 4: Sparse Pseudotime Ranges</h4>
-<p>In this case, certain pseudotime ranges have sparse cell
-representation. For better fitting, some cells may need to be removed,
-and pseudotime should be rescaled accordingly.</p>
+<h4>Step 4: Sparse pseudotime ranges</h4>
+<p>Here, certain pseudotime ranges have sparse cell representation. For
+better fitting, some cells may need to be removed, and pseudotime should
+be rescaled accordingly.</p>
 <pre class="r"><code>cell.pick=ori_tbl[(ori_tbl[,2]&lt;0.90)&amp;(ori_tbl[,2]&gt;0.05),1]
 
 cell.pick=as.character(as.matrix(cell.pick))
@@ -440,9 +441,10 @@ p&lt;-ggplot(data.frame(ori_tbl2), aes(x=pseudotime, y=0,colour= as.factor(meta.
 
 p</code></pre>
 </div>
-<div id="step-5-smooth-gene-expression-trajectories" class="section level4">
-<h4>Step 5: Smooth Gene Expression Trajectories</h4>
-<p>Use pseudotimeDE to fit the top 5000 HVGs. If
+<div id="step-5-smoothing-gene-expression-trajectories" class="section level4">
+<h4>Step 5: Smoothing gene expression trajectories</h4>
+<p>Apply <strong>pseudotimeDE</strong> to obtain smoothed gene
+expression trajectories for the top 5000 HVGs. If
 <strong>BiocParallel</strong> is not utilized, adjust the cores setting
 to <code>mc.cores = 1</code> if necessary.</p>
 <pre class="r"><code>RAW.sce=SingleCellExperiment(list(counts=roundRAW,logcounts=roundRAW.log))
@@ -451,7 +453,8 @@ system.time(res_fix.raw5000 &lt;- PseudotimeDE::runPseudotimeDE(gene.vec = top50
                                                              sub.tbl = NULL, # Set as NULL to only get fix.pv
                                                              mat = RAW.sce,
                                                              model = &quot;nb&quot;,mc.cores = 4,k=4,knots=c(0:3/3))) </code></pre>
-<p>Obtain smoothed gene expression trajectories over time.</p>
+<p>Obtain smoothed gene expression trajectories along the inferred
+pseudotime.</p>
 <pre class="r"><code>fit.nb5000=matrix(NA,ncol=ncol(RAW.sce),nrow =5000 )
 colnames(fit.nb5000)=rownames(meta.data2)
 rownames(fit.nb5000)=as.matrix(res_fix.raw5000[,1])
@@ -461,8 +464,8 @@ for( i in 1:5000){
 save(fit.nb5000,file=&quot;fitnb.RData&quot;)</code></pre>
 </div>
 <div id="step-6-gene-filtering" class="section level4">
-<h4>Step 6: Gene Filtering</h4>
-<p>Filter out genes with a standard deviation smaller than 0.25 and
+<h4>Step 6: Gene filtering</h4>
+<p>Filter out genes with a standard deviation smaller than 0.25, and
 retain the key genes for further analysis</p>
 <pre class="r"><code>ord.u=ori_tbl2[order(pseudotime.u),]
 ord.u=ord.u[,1]
@@ -483,8 +486,8 @@ gene.same=rownames(sdvar.same[which((sdvar.same[,1]&lt;=0.25)),])</code></pre>
 </div>
 <div id="step-7-clustering-and-visualization" class="section level4">
 <h4>Step 7: Clustering and Visualization</h4>
-<p>Cluster the gene expression trajectories into 7 distinct clusters.
-Finally, visualize the clustering results.</p>
+<p>Cluster the gene expression trajectories into 7 distinct
+clusters.</p>
 <pre class="r"><code>df=fit.nb5000
 for (i in 1:nrow(df)){
   df[i,]=scale(df[i,],center = T,scale = T)
@@ -512,7 +515,7 @@ saveRDS(ori_tbl2,file=&quot;ori_tbl.rds&quot;)
 #pseudotime.u=readRDS(&quot;pseudotime.rds&quot;)
 #load(&quot;fitnb30000cell2.RData&quot;)
 #cls=readRDS(file=&quot;2geneclusters_dis_02_025.rds&quot;)</code></pre>
-<p>Finally, visualize the clustering results.</p>
+<p>Visualize the clustering results.</p>
 <pre class="r"><code>library(MASS)
 pseudotime.u=readRDS(&quot;pseudotime.rds&quot;)
 load(&quot;fitnb.RData&quot;)

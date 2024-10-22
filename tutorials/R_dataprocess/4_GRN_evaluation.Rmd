@@ -50,15 +50,13 @@ saveRDS(NetDes_noadd_results,file="Racipe_simulation.rds")
 
 **Step 2: Mapping GRN Dynamics to scRNA-seq gene expression time trajectories**
 
-Once the GRNs are simulated, one can compare the network gene expression dynamics to the smoothed gene expression trajectories from the scRNA-seq data. The quality of the mapping will be evaluated by the following metrics:
+Once the GRNs are simulated, one can compare the network gene expression dynamics to the smoothed gene expression trajectories from the scRNA-seq data. We chose 6 points as the reference cell states and mapped the simulation data to these 6 states. The quality of the mapping will be evaluated by the following metrics:
 
 -   `percentage_NetDesnoadd`: The mapping percentage across all data dimensions.
 
 -   `percentage_NetDesnoadd_3D`: The mapping percentage for the first three principal components (PCs).
 
 -   `NetDesnoadd_entropy`: GRN entropy, representing the evenness of number of RACIPE models mapped to each reference cell state.
-
-[ML: entropy not defined in Methods; no reference cell states are mentioned.]
 
 ```{r}
 library(ggpointdensity)
@@ -142,6 +140,7 @@ for (i in 1:15) {
   unmap_random_dis = unmap_random_results[[1]]
   dis_scale_NetDesnoadd[i] = (ummap_distance - 1) / (unmap_random_dis - 1)
   umap_vector_random_NetDesnoadd[, i] = unmap_random_results[[2]]
+  colours_pick <- c(1, '#1f78b4', '#ff7f00', '#33a02c', '#6a3d9a', '#fb9a99','#a6a6a6')
     if (i == 13) {
   plot(pca_df[, 1], pca_df[, 2], col = colours_pick[clust + 1], xlab = "PC1", ylab = "PC2")}
 }

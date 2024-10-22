@@ -1,0 +1,7 @@
+Source,Target,Type
+gene1,gene2,1
+gene1,gene3,1
+gene2,gene1,1
+gene2,gene3,1
+gene3,gene1,1
+gene3,gene2,1

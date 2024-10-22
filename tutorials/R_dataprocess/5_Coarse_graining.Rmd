@@ -14,7 +14,6 @@ knitr::opts_chunk$set(echo = TRUE)
 Network coarse-graining can be performed by applying **SacoGraci** package.
 
 Start by loading the gene regulatory network (GRN) to perform coarse-graining. The user input is a GRN in the format of network topology (*i.e.*, information regarding source, target and interaction type for each edge).
-[M.L: Make sure the colnames are consistent]
 
 ```{r}
 library(readr)
@@ -41,11 +40,11 @@ saveRDS(data_exp,file="data_exp.rds")
 
 After running the RACIPE simulations, one can cluster genes using the simulated data by either:
 
-- **Applying a clustering algorithm**, or
+-   **Applying a clustering algorithm**, or
 
-- **Manually providing gene grouping**
+-   **Manually providing gene grouping**
 
-Below shows an example where gene grouping is provided based on visual inspection of simulated gene expression patterns from RACIPE simulations of the large GRN. 
+Below shows an example where gene grouping is provided based on visual inspection of simulated gene expression patterns from RACIPE simulations of the large GRN.
 
 ```{r}
 data_exp=readRDS("data_exp.rds")
