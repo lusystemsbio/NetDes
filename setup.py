@@ -1,19 +1,16 @@
 from setuptools import setup, find_packages
+from pathlib import Path
+
+here = Path(__file__).parent
+long_description = (here / "README.md").read_text(encoding="utf-8")
 
 setup(
     name='NetDes',
-    version='1.0.1',
-    packages=['NetDes'],  # Automatically find all packages in the directory
-    description='Network modeling based on the Dynamic equation simulation (NetDes)',
-    license='MIT',
-    install_requires=[
-        'numpy>=1.26.4',         # Specify the version for numpy
-        'torch>=1.12.1',         # Specify the version for PyTorch
-        'matplotlib>=3.5.1',     # Specify the version for matplotlib
-        'pandas>=2.2.2',         # Specify the version for pandas
-        'scipy>=1.13.1',         # Specify the version for scipy
-        'scikit-learn>=1.0.2'    # Specify the version for scikit-learn
-    ],
+    version='1.0.6',
+    packages=find_packages(),  
+    description='Network modeling based on dynamic equation simulation (NetDes)',
+    long_description=long_description,
+    long_description_content_type='text/markdown',
     author='Yukai You',
     author_email='you.yu@northeastern.edu',
     url='https://github.com/lusystemsbio/NetDes',
@@ -24,5 +21,15 @@ setup(
         'License :: OSI Approved :: MIT License',
         'Operating System :: OS Independent',
     ],
-    python_requires='>=3.9',  # Ensure it works for Python 3.9 and above
+    license='MIT',
+    license_files=['LICENSE.txt'],
+    python_requires='>=3.9',
+    install_requires=[
+        'numpy>=1.26.4',
+        'torch>=1.12.1',
+        'matplotlib>=3.5.1',
+        'pandas>=2.2.2',
+        'scipy>=1.13.1',
+        'scikit-learn>=1.0.2'
+    ],
 )

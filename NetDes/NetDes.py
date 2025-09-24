@@ -17,7 +17,6 @@ from scipy.optimize import Bounds
 from scipy.optimize import fmin_l_bfgs_b
 import matplotlib
 import matplotlib.pyplot as plt
-plt.style.use('seaborn-whitegrid')
 from sklearn.metrics import mean_squared_error
 from sklearn.metrics import r2_score
 from sklearn.model_selection import KFold
@@ -439,7 +438,7 @@ def CV_fit(ob, t_array, stdatabase, boundary_cv,cc=5,w=0):
             stPoint=stdatabase[th]
             resCl=minimize(fmodelOneHilltestw,stPoint, args=args1, method='L-BFGS-B', jac='2-point', bounds=boundary_cv)
             y_pred=fit_results(resCl.x,*argst)
-            MSE_test_term.iloc[th,nd]=mean_squared_error(y_test,y_pred,squared= True )
+            MSE_test_term.iloc[th,nd]=mean_squared_error(y_test,y_pred)
         nd=nd+1
     return(MSE_test_term)
 
@@ -541,7 +540,7 @@ def CV_tuning(ob,t_array,nums,stdatabase,boundary_cv,cc=5):
                 stPoint=stdatabase[th]
                 resCl=minimize(fmodelOneHilltestw,stPoint, args=args1, method='L-BFGS-B', jac='2-point', bounds=boundary_cv)
                 y_pred=fit_results(resCl.x,*argst)
-                MSE_test_term.iloc[th,nd]=mean_squared_error(y_test,y_pred,squared= True )
+                MSE_test_term.iloc[th,nd]=mean_squared_error(y_test,y_pred )
             nd=nd+1    
         means=MSE_test_term.mean(axis=1)
         MSE_min[i]=min(means)
@@ -909,7 +908,7 @@ def interactions_test(gene_list,network,consis,MSE_table,expression,log_expressi
             arrays2=test1[:-1]
             y_pred1=fit_results(res_pick_all[ii][ii2], *arrays2)
             realdata=np.array(log_expression.loc[choose].iloc[0:],dtype='float64')
-            MSE_test=mean_squared_error(realdata[0],y_pred1,squared= True )
+            MSE_test=mean_squared_error(realdata[0],y_pred1)
             MSE1=MSE_test.copy()
             MSE_ratio=[]
             MSE_v=[]
@@ -946,7 +945,7 @@ def interactions_test(gene_list,network,consis,MSE_table,expression,log_expressi
                     test2=get_args2(expression,ob=ob2,target=gene_list[ii])
                     arrays3=test2[:-1]
                     y_pred2=fit_results(par2,*arrays3)
-                    MSE2=mean_squared_error(realdata[0],y_pred2,squared= True )
+                    MSE2=mean_squared_error(realdata[0],y_pred2)
                     MSE_v.append(MSE2)
                     MSE_ratio.append(MSE2/MSE1)
             res_fit_part.append(res_dif_fit)
@@ -2162,8 +2161,8 @@ def two_gene_driving(dt,t_tot,gene_list, drivers, tfexpression_target2, res_fina
                 ms, ms2 = 10000, 10000
             else:
                 y_pred2_scale = scale_array(2 ** y_pred2)
-                ms = mean_squared_error(y_pred2_scale, test4_2, squared=True) if not np.isnan(y_pred2_scale).any() else 0
-                ms2 = mean_squared_error(test41_2, test4_2, squared=True) if not np.isnan(test41_2).any() else 0
+                ms = mean_squared_error(y_pred2_scale, test4_2) if not np.isnan(y_pred2_scale).any() else 0
+                ms2 = mean_squared_error(test41_2, test4_2) if not np.isnan(test41_2).any() else 0
             
             MSE_twolines.append(ms)
             MSE_twolines_dif.append(ms2)
@@ -2266,8 +2265,8 @@ def one_gene_driving(dt,t_tot,gene_list, drivers, tfexpression_target2, res_fina
                 ms, ms2 = 10000, 10000
             else:
                 y_pred2_scale = scale_array(2 ** y_pred2)
-                ms = mean_squared_error(y_pred2_scale, test4_2, squared=True) if not np.isnan(y_pred2_scale).any() else 0
-                ms2 = mean_squared_error(test41_2, test4_2, squared=True) if not np.isnan(test41_2).any() else 0
+                ms = mean_squared_error(y_pred2_scale, test4_2) if not np.isnan(y_pred2_scale).any() else 0
+                ms2 = mean_squared_error(test41_2, test4_2) if not np.isnan(test41_2).any() else 0
 
             MSE_oneline.append(ms)
             MSE_oneline_fbdiff.append(ms2)
@@ -2288,8 +2287,6 @@ def one_gene_driving(dt,t_tot,gene_list, drivers, tfexpression_target2, res_fina
 
 
     return sign1_results, sign1_results_dif
-
-
 
 
 def driving_results(dri_genes, gene_list, tfexpression_target2, network, tfexpression, pseudotime_pick, res_final, gene_position, ob_newall, cached=False,cache=None):
@@ -2448,12 +2445,33 @@ def driving_results(dri_genes, gene_list, tfexpression_target2, network, tfexpre
         test11 = np.array(df4.iloc[ii], dtype='float64')
         test12 = scale_array2(test11, test01)
         arr2 = np.linspace(0, 1, len(test11))
-
-        # Plot results
-        ax.plot(arr2[1:], test02[1:], color=colors[0], linewidth=linewidths[0], alpha=0.7, label='Forward signal result')
-        ax.plot(arr1[1:], np.flip(test12[1:]), color=colors[1], linewidth=linewidths[1], alpha=0.7, label='Backward signal result')
-        ax.plot(pseudotime_pick, scale_array(2**orgin[0]), color=colors[2], linewidth=linewidths[2], linestyle='--', label='Data')
-
+        if choose in dri_genes:
+            # for driving‐genes: only plot the real data
+            ax.plot(
+                pseudotime_pick,
+                scale_array(2**orgin[0]),
+                linewidth=linewidths[2],
+                linestyle='--',
+                label='Data'
+            )
+        else:
+            # non‐driving genes: plot forward, backward, and data
+            ax.plot(
+                arr2[1:], test02[1:],
+                color=colors[0], linewidth=linewidths[0],
+                alpha=0.7, label='Forward signal result'
+            )
+            ax.plot(
+                arr1[1:], np.flip(test12[1:]),
+                color=colors[1], linewidth=linewidths[1],
+                alpha=0.7, label='Backward signal result'
+            )
+            ax.plot(
+                pseudotime_pick,
+                scale_array(2**orgin[0]),
+                color=colors[2], linewidth=linewidths[2],
+                linestyle='--', label='Data'
+            )
         # Set title and labels
         ax.set_title(choose, fontsize=30, fontweight='bold')
         ax.set_xlabel('Pseudotime', fontsize=20)
@@ -2464,7 +2482,7 @@ def driving_results(dri_genes, gene_list, tfexpression_target2, network, tfexpre
         
         # Add legend to the first subplot only
         if ii == 0:
-            ax.legend(fontsize=15, loc='upper right')
+            ax.legend(fontsize=15, loc='upper right',framealpha=0.5)
 
     # Turn off unused subplots
     for jj in range(num_plots, len(axs)):
@@ -2475,4 +2493,5 @@ def driving_results(dri_genes, gene_list, tfexpression_target2, network, tfexpre
     plt.show()
 
     return df3, df4,cache,fig
+
 
