@@ -31,14 +31,14 @@ To install the most recent release, run
 
 ## Tutorials
 
-[Processing gene expression time trajectories using scRNA-seq data](tutorials/R_dataprocess/1_Trajectores_and_clusters.html): This script illustrates the steps to process input scRNA-seq data, obtain smoothed gene expression time trajectories, and cluster genes based on the trajectories. (Steps 1 and 2)
+[Processing gene expression time trajectories using scRNA-seq data](https://lusystemsbio.github.io/NetDes/tutorials/R_dataprocess/1_Trajectores_and_clusters.html): This script illustrates the steps to process input scRNA-seq data, obtain smoothed gene expression time trajectories, and cluster genes based on the trajectories. (Steps 1 and 2)
 
-[Inferring core TFs](tutorials/R_dataprocess/2_TFs_identify.html): This script shows the inference of core transcription factors using Fisher's exact test. (Step 3)
+[Inferring core TFs](https://lusystemsbio.github.io/NetDes/tutorials/R_dataprocess/2_TFs_identify.html): This script shows the inference of core transcription factors using Fisher's exact test. (Step 3)
 
-[Initial GRN construction](tutorials/R_dataprocess/3_InitialGRN.html): This script illustrates how to build an initial GRN using TF-target gene databases like Rcistarge, TRRUST, and NetAct. (Step 4)
+[Initial GRN construction](https://lusystemsbio.github.io/NetDes/tutorials/R_dataprocess/3_InitialGRN.html): This script illustrates how to build an initial GRN using TF-target gene databases like Rcistarge, TRRUST, and NetAct. (Step 4)
 
-[GRN optimization and simulation](tutorials/tutorial.html): This tutorial page shows the NetDes' usage for network optimization and simulation. The user input includes pseudotime, smoothed gene expression trajectories, and an initial GRN. An example was given for simulated data of a small GRN, which one can generate with [this script.](tutorials/datasimulation.html) (Steps 5 and 6)
+[GRN optimization and simulation](https://lusystemsbio.github.io/NetDes/tutorials/tutorial.html): This tutorial page shows the NetDes' usage for network optimization and simulation. The user input includes pseudotime, smoothed gene expression trajectories, and an initial GRN. An example was given for simulated data of a small GRN, which one can generate with [this script.](https://lusystemsbio.github.io/NetDes/tutorials/datasimulation.html) (Steps 5 and 6)
 
-[Benchmarking](tutorials/R_dataprocess/4_GRN_evaluation.html): This script explains the steps for GRN evaluation by comparing RACIPE simulations with the scRNA-seq data. (Step 5)
+[Benchmarking](https://lusystemsbio.github.io/NetDes/tutorials/R_dataprocess/4_GRN_evaluation.html): This script explains the steps for GRN evaluation by comparing RACIPE simulations with the scRNA-seq data. (Step 5)
 
-[Network coarse-graining](tutorials/R_dataprocess/5_Coarse_graining.html): This script shows the process of coarse-graining the optimized GRN into a small gene circuit using [SacroGraci](https://github.com/lusystemsbio/SacoGraci). (Step 6)
+[Network coarse-graining](https://lusystemsbio.github.io/NetDes/tutorials/R_dataprocess/5_Coarse_graining.html): This script shows the process of coarse-graining the optimized GRN into a small gene circuit using [SacroGraci](https://github.com/lusystemsbio/SacoGraci). (Step 6)
